@@ -140,6 +140,15 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .rl-del{margin-left:auto;cursor:pointer;color:var(--tx3);font-size:14px;padding:2px 6px;border-radius:4px;transition:.15s}
 .rl-del:hover{color:var(--red);background:var(--red-s)}
 
+/* Inline category editor */
+.tx-cat{cursor:pointer;transition:.15s}.tx-cat:hover{background:var(--acc-s);color:var(--acc)}
+.cat-edit{position:relative;display:inline-block}
+.cat-dd{display:none;position:absolute;top:100%;left:0;z-index:50;background:var(--s1);border:1px solid var(--brd);border-radius:var(--rs);padding:6px;min-width:220px;max-height:320px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.cat-dd.open{display:block}
+.cat-dd-i{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--tx2);transition:.1s;white-space:nowrap}
+.cat-dd-i:hover{background:var(--s2);color:var(--tx)}
+.cat-dd-i.cur{background:var(--acc-s);color:var(--acc)}
+.cat-dd-srch{width:100%;background:var(--s2);border:1px solid var(--brd);color:var(--tx);padding:5px 8px;border-radius:6px;font-size:12px;font-family:inherit;outline:none;margin-bottom:6px}
 .proc{display:none;align-items:center;gap:10px;padding:12px 16px;background:var(--acc-s);border-radius:var(--rs);font-size:13px;color:var(--acc);margin-top:16px}
 .proc.show{display:flex}
 .spin{width:16px;height:16px;border:2px solid var(--acc);border-top-color:transparent;border-radius:50%;animation:sp .6s linear infinite}
@@ -165,6 +174,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 <div class="nav-i act" onclick="showPage('dash',this)"><span class="ic">📊</span> Dashboard</div>
 <div class="nav-i" onclick="showPage('cats',this)"><span class="ic">🏷️</span> Categories</div>
 <div class="nav-i" onclick="showPage('txns',this)"><span class="ic">📋</span> Transactions</div>
+<div class="nav-i" onclick="showPage('trends',this)"><span class="ic">📈</span> Trends</div>
 </div>
 <div class="nav-s">
 <div class="nav-l">Manage</div>
@@ -188,8 +198,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 <h1 style="font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:4px" id="dT">January 2026</h1>
 <p style="font-size:14px;color:var(--tx3);margin-bottom:24px" id="dS">Upload statements to get started</p>
 <div class="sum-row">
-<div class="sum-c t ai"><div class="sum-l">Total Spending</div><div class="sum-a" id="sT">$0.00</div><div class="sum-a rd" id="sTr">RD$0.00</div></div>
-<div class="sum-c p ai"><div class="sum-l">Personal</div><div class="sum-a" id="sP">$0.00</div><div class="sum-a rd" id="sPr">RD$0.00</div></div>
+<div class="sum-c t ai"><div class="sum-l">Total Spending</div><div class="sum-a" id="sT">$0.00</div><div class="sum-a rd" id="sTr">RD$0.00</div><div id="sTchg" style="font-size:11px;margin-top:6px"></div></div>
+<div class="sum-c p ai"><div class="sum-l">Personal</div><div class="sum-a" id="sP">$0.00</div><div class="sum-a rd" id="sPr">RD$0.00</div><div id="sPchg" style="font-size:11px;margin-top:6px"></div></div>
 <div class="sum-c b ai"><div class="sum-l">Business / Reimbursable</div><div class="sum-a" id="sB">$0.00</div><div class="sum-a rd" id="sBr">RD$0.00</div></div>
 <div class="sum-c u ai"><div class="sum-l">Uncategorized</div><div class="sum-a" id="sU">$0.00</div><div class="sum-a rd" id="sUr">RD$0.00</div><div id="uAct" style="margin-top:8px;display:none"><button class="btn btn-s btn-p" onclick="openCat()">Categorize →</button></div></div>
 </div>
@@ -229,6 +239,38 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto">
 <table class="tt"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Card</th><th style="text-align:right">USD</th><th style="text-align:right">RD$</th><th>Type</th></tr></thead><tbody id="txBd"></tbody></table>
 </div></div>
+</div>
+
+<!-- TRENDS -->
+<div class="page" id="pg-trends">
+<h1 style="font-size:28px;font-weight:700;letter-spacing:-1px;margin-bottom:4px">Trends</h1>
+<p style="font-size:14px;color:var(--tx3);margin-bottom:24px">Track your spending over time and compare month to month</p>
+
+<div class="card">
+<div class="card-h"><div><div class="card-t">Monthly Spending (USD)</div><div class="card-st">Total personal spending per month</div></div></div>
+<div id="trMonthly" style="min-height:160px"></div>
+</div>
+
+<div class="card">
+<div class="card-h"><div><div class="card-t">Month-over-Month Comparison</div><div class="card-st">Category breakdown vs. previous month</div></div></div>
+<div style="overflow-x:auto"><table class="tt" id="trCompTbl">
+<thead><tr><th>Category</th><th style="text-align:right" id="trPrevH">Prev Month</th><th style="text-align:right" id="trCurH">This Month</th><th style="text-align:right">Change</th><th style="width:120px">Trend</th></tr></thead>
+<tbody id="trCompBd"></tbody>
+</table></div>
+</div>
+
+<div class="card">
+<div class="card-h"><div><div class="card-t">Category Trends</div><div class="card-st">Select a category to see its spending history</div></div>
+<select id="trCatSel" onchange="rCatTrend()" style="background:var(--s2);border:1px solid var(--brd);color:var(--tx);padding:6px 12px;border-radius:var(--rs);font-size:13px;font-family:inherit;outline:none"></select>
+</div>
+<div id="trCatChart" style="min-height:120px"></div>
+<div id="trCatStats" style="margin-top:12px"></div>
+</div>
+
+<div class="card">
+<div class="card-h"><div><div class="card-t">Averages & Totals</div><div class="card-st">Across all months with data</div></div></div>
+<div id="trAvgs"></div>
+</div>
 </div>
 
 <!-- UPLOAD -->
@@ -426,7 +468,7 @@ document.querySelectorAll('.page').forEach(p=>p.classList.remove('act'));
 document.getElementById('pg-'+pg).classList.add('act');
 document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('act'));
 if(el)el.classList.add('act');
-if(pg==='dash')rDash();if(pg==='cats')rCats();if(pg==='txns')rTx();if(pg==='rules')rRules();
+if(pg==='dash')rDash();if(pg==='cats')rCats();if(pg==='txns')rTx();if(pg==='rules')rRules();if(pg==='trends')rTrends();
 }
 
 function chgMo(d){
@@ -467,6 +509,12 @@ document.getElementById('sBr').textContent='RD$'+fmt(su(biz,'rdp'));
 document.getElementById('sU').textContent='$'+fmt(su(unk,'usd'));
 document.getElementById('sUr').textContent='RD$'+fmt(su(unk,'rdp'));
 document.getElementById('uAct').style.display=unk.length?'block':'none';
+// MoM comparison
+const pv=prevMo(S.mo,S.yr);const pvTx=getTxFor(pv.mo,pv.yr);
+const pvPers=pvTx.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='unknown'&&t.cat!=='bank_fees');
+const pvTotal=su(pvTx,'usd');const pvPersU=su(pvPers,'usd');
+document.getElementById('sTchg').innerHTML=pvTotal>0?momBadge(su(txs,'usd'),pvTotal):'';
+document.getElementById('sPchg').innerHTML=pvPersU>0?momBadge(su(pers,'usd')*pm,pvPersU*(1+(S.oPct/100))):'';
 rDonut(pers);rDaily(txs.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='bank_fees'));rTopC(pers);rTopM(pers);rRec(txs);
 }
 
@@ -562,10 +610,11 @@ if(fType==='unknown')fl=fl.filter(t=>t.cat==='unknown');
 fl.sort((a,b)=>b.date.localeCompare(a.date));
 document.getElementById('txCnt').textContent=fl.length+' of '+txs.length+' transactions';
 document.getElementById('txBd').innerHTML=fl.map(tx=>{
+const ti=S.txs.indexOf(tx);
 const isBiz=CATS[tx.cat]?.biz;const isUnk=tx.cat==='unknown';
 let badge='';if(isBiz)badge='<span class="bdg '+(tx.cat==='business'?'bdg-b':'bdg-r')+'">'+(tx.cat==='business'?'Business':'Reimb.')+'</span>';
 if(isUnk)badge='<span class="bdg bdg-u">Unknown</span>';
-return '<tr><td class="mono" style="font-size:12px;color:var(--tx2);white-space:nowrap">'+tx.date+'</td><td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+tx.desc+'">'+tx.desc+'</td><td><span class="tx-cat">'+(CATS[tx.cat]?.e||'❓')+' '+(CATS[tx.cat]?.n||'Unknown')+'</span></td><td style="font-size:11px;color:var(--tx3);white-space:nowrap">'+tx.card+'</td><td class="mono" style="text-align:right;font-size:13px;font-weight:500">'+(tx.usd>0?'$'+fmt(tx.usd):'-')+'</td><td class="mono" style="text-align:right;font-size:13px;color:var(--tx2)">'+(tx.rdp>0?'RD$'+fmt(tx.rdp):'-')+'</td><td>'+badge+'</td></tr>';
+return '<tr><td class="mono" style="font-size:12px;color:var(--tx2);white-space:nowrap">'+tx.date+'</td><td style="max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+tx.desc+'">'+tx.desc+'</td><td><div class="cat-edit"><span class="tx-cat" onclick="togCatDD('+ti+',this)" title="Click to change category">'+(CATS[tx.cat]?.e||'❓')+' '+(CATS[tx.cat]?.n||'Unknown')+' ✎</span><div class="cat-dd" id="cdd-'+ti+'">'+mkCatDD(ti,tx.cat)+'</div></div></td><td style="font-size:11px;color:var(--tx3);white-space:nowrap">'+tx.card+'</td><td class="mono" style="text-align:right;font-size:13px;font-weight:500">'+(tx.usd>0?'$'+fmt(tx.usd):'-')+'</td><td class="mono" style="text-align:right;font-size:13px;color:var(--tx2)">'+(tx.rdp>0?'RD$'+fmt(tx.rdp):'-')+'</td><td>'+badge+'</td></tr>';
 }).join('');
 }
 
@@ -661,6 +710,161 @@ const catOpts=Object.entries(CATS).filter(([k])=>k!=='unknown').map(([k,v])=>k+'
 const cat=prompt('Enter category key:\n'+catOpts);
 if(!cat||!CATS[cat])return;
 S.rules.unshift({p:pat,c:cat});applyCats();saveSt();rRules();
+}
+
+// ====================== INLINE CATEGORY EDITOR ======================
+
+// Helper: get transactions for any month/year
+function getTxFor(m,y){const ms=String(m+1).padStart(2,'0');return S.txs.filter(tx=>{const[ty,tm]=tx.date.split('-');return ty===String(y)&&tm===ms})}
+// Helper: get all months that have data
+function getDataMonths(){
+const months=new Set();S.txs.forEach(tx=>{const[y,m]=tx.date.split('-');months.add(y+'-'+m)});
+return [...months].sort().map(s=>{const[y,m]=s.split('-');return{mo:parseInt(m)-1,yr:parseInt(y)}});
+}
+// Helper: previous month
+function prevMo(m,y){let pm=m-1,py=y;if(pm<0){pm=11;py--}return{mo:pm,yr:py}}
+// MoM change badge
+function momBadge(cur,prev){
+if(!prev||prev===0)return'<span style="color:var(--tx3)">—</span>';
+const pct=((cur-prev)/prev)*100;
+const up=pct>0;const col=up?'var(--red)':'var(--grn)';
+return'<span style="color:'+col+'">'+(up?'▲':'▼')+' '+Math.abs(pct).toFixed(0)+'% vs prev</span>';
+}
+
+// ====================== TRENDS PAGE ======================
+function rTrends(){
+const months=getDataMonths();if(!months.length){
+document.getElementById('trMonthly').innerHTML='<div style="text-align:center;padding:40px;color:var(--tx3)">No data yet. Upload statements for multiple months to see trends.</div>';
+document.getElementById('trCompBd').innerHTML='';document.getElementById('trCatChart').innerHTML='';
+document.getElementById('trAvgs').innerHTML='';return;
+}
+// Monthly spending bar chart
+const monthData=months.map(({mo,yr})=>{
+const txs=getTxFor(mo,yr).filter(t=>!CATS[t.cat]?.biz&&t.cat!=='bank_fees');
+const usd=txs.reduce((s,t)=>s+t.usd,0);const rdp=txs.reduce((s,t)=>s+t.rdp,0);
+return{mo,yr,usd,rdp,label:moNames[mo].substring(0,3)+' '+yr};
+});
+const mxU=Math.max(...monthData.map(d=>d.usd),1);
+document.getElementById('trMonthly').innerHTML='<div class="bc">'+monthData.map(d=>{
+const p=(d.usd/mxU)*100;const isCur=(d.mo===S.mo&&d.yr===S.yr);
+return'<div class="br"><span class="br-l" style="'+(isCur?'color:var(--acc);font-weight:600':'')+'">'+d.label+'</span><div class="br-t"><div class="br-f" style="width:'+p+'%;background:'+(isCur?'var(--acc)':'var(--s3);border:1px solid var(--brd)')+'"><span class="br-v" style="color:'+(p>30&&isCur?'white':'var(--tx)')+'">$'+fmtI(d.usd)+'</span></div></div></div>';
+}).join('')+'</div>';
+
+// MoM comparison table
+const cur={mo:S.mo,yr:S.yr};const prev=prevMo(S.mo,S.yr);
+const curTx=getTxFor(cur.mo,cur.yr).filter(t=>!CATS[t.cat]?.biz&&t.cat!=='bank_fees');
+const prevTx=getTxFor(prev.mo,prev.yr).filter(t=>!CATS[t.cat]?.biz&&t.cat!=='bank_fees');
+document.getElementById('trPrevH').textContent=moNames[prev.mo].substring(0,3)+' '+prev.yr;
+document.getElementById('trCurH').textContent=moNames[cur.mo].substring(0,3)+' '+cur.yr;
+const allCats=new Set();curTx.forEach(t=>allCats.add(t.cat));prevTx.forEach(t=>allCats.add(t.cat));
+const compData=[...allCats].map(cat=>{
+const pU=prevTx.filter(t=>t.cat===cat).reduce((s,t)=>s+t.usd,0);
+const cU=curTx.filter(t=>t.cat===cat).reduce((s,t)=>s+t.usd,0);
+const chg=pU>0?((cU-pU)/pU)*100:cU>0?100:0;
+return{cat,prev:pU,cur:cU,chg};
+}).sort((a,b)=>b.cur-a.cur);
+const compMx=Math.max(...compData.map(d=>Math.max(d.cur,d.prev)),1);
+document.getElementById('trCompBd').innerHTML=compData.map(d=>{
+const col=d.chg>5?'var(--red)':d.chg<-5?'var(--grn)':'var(--tx2)';
+const arrow=d.chg>5?'▲':d.chg<-5?'▼':'—';
+const barPrev=(d.prev/compMx)*100;const barCur=(d.cur/compMx)*100;
+return'<tr><td style="white-space:nowrap">'+(CATS[d.cat]?.e||'❓')+' '+(CATS[d.cat]?.n||d.cat)+'</td><td class="mono" style="text-align:right;font-size:13px;color:var(--tx2)">$'+fmtI(d.prev)+'</td><td class="mono" style="text-align:right;font-size:13px;font-weight:500">$'+fmtI(d.cur)+'</td><td style="text-align:right;font-size:12px;color:'+col+'">'+arrow+' '+Math.abs(d.chg).toFixed(0)+'%</td><td><div style="display:flex;gap:2px;align-items:center;height:20px"><div style="height:8px;width:'+barPrev+'%;background:var(--tx3);border-radius:2px;opacity:.5"></div></div><div style="display:flex;gap:2px;align-items:center;height:20px;margin-top:-12px"><div style="height:8px;width:'+barCur+'%;background:'+(CATS[d.cat]?.c||'var(--acc)')+';border-radius:2px"></div></div></td></tr>';
+}).join('');
+
+// Category trend selector
+const catSel=document.getElementById('trCatSel');const curVal=catSel.value;
+const activeCats=[...allCats].filter(c=>c!=='unknown').sort((a,b)=>(CATS[a]?.n||'').localeCompare(CATS[b]?.n||''));
+catSel.innerHTML=activeCats.map(c=>'<option value="'+c+'">'+(CATS[c]?.e||'')+' '+(CATS[c]?.n||c)+'</option>').join('');
+if(curVal&&activeCats.includes(curVal))catSel.value=curVal;
+rCatTrend();
+
+// Averages
+const totalMonths=monthData.length;const totalUSD=monthData.reduce((s,d)=>s+d.usd,0);
+const avgUSD=totalUSD/totalMonths;
+const catAvgs={};months.forEach(({mo,yr})=>{
+getTxFor(mo,yr).filter(t=>!CATS[t.cat]?.biz&&t.cat!=='bank_fees').forEach(t=>{
+if(!catAvgs[t.cat])catAvgs[t.cat]={total:0,months:new Set()};catAvgs[t.cat].total+=t.usd;catAvgs[t.cat].months.add(mo+'-'+yr);
+})});
+const avgSorted=Object.entries(catAvgs).sort(([,a],[,b])=>b.total-a.total);
+document.getElementById('trAvgs').innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"><div style="background:var(--s2);padding:16px;border-radius:var(--rs)"><div style="font-size:11px;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">Months Tracked</div><div class="mono" style="font-size:20px;font-weight:500">'+totalMonths+'</div></div><div style="background:var(--s2);padding:16px;border-radius:var(--rs)"><div style="font-size:11px;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">Total Personal (USD)</div><div class="mono" style="font-size:20px;font-weight:500">$'+fmtI(totalUSD)+'</div></div><div style="background:var(--s2);padding:16px;border-radius:var(--rs)"><div style="font-size:11px;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">Monthly Average</div><div class="mono" style="font-size:20px;font-weight:500">$'+fmtI(avgUSD)+'</div></div></div>'+
+'<div style="font-size:13px;font-weight:600;margin-bottom:8px">Average per Category (monthly)</div>'+
+avgSorted.slice(0,12).map(([cat,v])=>{const avg=v.total/v.months.size;return'<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(42,42,56,.3)"><span style="width:160px;font-size:12px">'+(CATS[cat]?.e||'')+' '+(CATS[cat]?.n||cat)+'</span><span class="mono" style="font-size:12px;color:var(--tx2)">$'+fmt(avg)+'/mo</span><span style="font-size:11px;color:var(--tx3)">('+v.months.size+' mo, $'+fmtI(v.total)+' total)</span></div>'}).join('');
+}
+
+function rCatTrend(){
+const cat=document.getElementById('trCatSel').value;if(!cat)return;
+const months=getDataMonths();
+const data=months.map(({mo,yr})=>{
+const txs=getTxFor(mo,yr).filter(t=>t.cat===cat);
+return{mo,yr,usd:txs.reduce((s,t)=>s+t.usd,0),label:moNames[mo].substring(0,3)+' '+yr};
+});
+const mx=Math.max(...data.map(d=>d.usd),1);
+document.getElementById('trCatChart').innerHTML='<div class="bc">'+data.map(d=>{
+const p=(d.usd/mx)*100;const isCur=(d.mo===S.mo&&d.yr===S.yr);
+return'<div class="br"><span class="br-l">'+d.label+'</span><div class="br-t"><div class="br-f" style="width:'+Math.max(p,1)+'%;background:'+(CATS[cat]?.c||'var(--acc)')+'"><span class="br-v" style="color:'+(p>30?'white':'var(--tx)')+'">$'+fmtI(d.usd)+'</span></div></div></div>';
+}).join('')+'</div>';
+// Stats
+const vals=data.map(d=>d.usd).filter(v=>v>0);
+if(vals.length>0){
+const avg=vals.reduce((s,v)=>s+v,0)/vals.length;
+const min=Math.min(...vals);const max=Math.max(...vals);
+document.getElementById('trCatStats').innerHTML='<div style="display:flex;gap:16px;font-size:12px;color:var(--tx2)"><span>Avg: <strong class="mono">$'+fmtI(avg)+'</strong></span><span>Min: <strong class="mono">$'+fmtI(min)+'</strong></span><span>Max: <strong class="mono">$'+fmtI(max)+'</strong></span><span>Months active: <strong>'+vals.length+'</strong></span></div>';
+}else{document.getElementById('trCatStats').innerHTML='<div style="font-size:12px;color:var(--tx3)">No data for this category</div>'}
+}
+
+// ====================== INLINE CATEGORY EDITOR ======================
+function mkCatDD(ti,curCat){
+const opts=Object.entries(CATS).filter(([k])=>k!=='bank_fees').map(([k,v])=>
+'<div class="cat-dd-i'+(k===curCat?' cur':'')+'" onclick="chgCat('+ti+',\''+k+'\',this)">'+(v.e||'')+' '+v.n+'</div>'
+).join('');
+return '<input class="cat-dd-srch" placeholder="Search categories..." oninput="filterCDD(this)" onclick="event.stopPropagation()">'+opts;
+}
+
+function togCatDD(ti,el){
+// Close any open dropdowns first
+document.querySelectorAll('.cat-dd.open').forEach(d=>d.classList.remove('open'));
+const dd=document.getElementById('cdd-'+ti);
+dd.classList.toggle('open');
+if(dd.classList.contains('open')){
+const srch=dd.querySelector('.cat-dd-srch');if(srch)srch.focus();
+// Close on click outside
+setTimeout(()=>{
+const closer=function(e){if(!dd.contains(e.target)&&e.target!==el){dd.classList.remove('open');document.removeEventListener('click',closer)}};
+document.addEventListener('click',closer);
+},10);
+}
+event.stopPropagation();
+}
+
+function filterCDD(input){
+const q=input.value.toLowerCase();
+const items=input.parentElement.querySelectorAll('.cat-dd-i');
+items.forEach(item=>{item.style.display=item.textContent.toLowerCase().includes(q)?'flex':'none'});
+}
+
+function chgCat(ti,newCat,el){
+const tx=S.txs[ti];if(!tx)return;
+const oldCat=tx.cat;
+tx.co=newCat; // override
+tx.cat=newCat;
+saveSt();
+// Close dropdown
+document.querySelectorAll('.cat-dd.open').forEach(d=>d.classList.remove('open'));
+// Ask to create a rule
+const desc=tx.desc.toUpperCase();
+const words=desc.split(/[\s,]+/).filter(w=>w.length>3&&!w.match(/^\d+$/)&&!w.match(/^[A-Z]{2}$/)&&w!=='HELP.UBER.C');
+const suggestedPattern=words.slice(0,2).join(' ');
+if(suggestedPattern&&confirm('Category changed to '+(CATS[newCat]?.n||newCat)+'.\n\nCreate a rule so "'+suggestedPattern+'" is always categorized as '+(CATS[newCat]?.n||newCat)+'?\n\nThis will apply to all matching transactions.')){
+// Remove old rule for this pattern if exists
+S.rules=S.rules.filter(r=>r.p.toUpperCase()!==suggestedPattern.toUpperCase());
+S.rules.unshift({p:suggestedPattern,c:newCat});
+// Re-apply to all transactions with same pattern
+S.txs.forEach(t=>{
+if(t.desc.toUpperCase().includes(suggestedPattern)&&!t.co){t.cat=newCat}
+});
+saveSt();
+}
+rTx(); // re-render
 }
 
 // ====================== EXPORT ======================
