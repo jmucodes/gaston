@@ -40,7 +40,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
 .card-t{font-size:15px;font-weight:600;letter-spacing:-.2px}
 .card-st{font-size:12px;color:var(--tx3);margin-top:2px}
-.sum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.sum-row{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px}
 .sum-c{background:var(--s1);border:1px solid var(--brd);border-radius:var(--rl);padding:20px;position:relative;overflow:hidden}
 .sum-c::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .sum-c.t::before{background:var(--acc)}.sum-c.p::before{background:var(--grn)}.sum-c.b::before{background:var(--yel)}.sum-c.u::before{background:var(--red)}
@@ -157,7 +157,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 .ai{animation:fi .4s ease-out both}
 
 .note{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(96,165,250,.08);border-radius:var(--rs);font-size:12px;color:var(--blu);margin-top:12px}
-@media(max-width:1100px){.sum-row{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+@media(max-width:1100px){.sum-row{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:1fr}}
 @media(max-width:768px){.sb{display:none}.main{margin-left:0;padding:16px}.sum-row{grid-template-columns:1fr}}
 </style>
 </head>
@@ -201,9 +201,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 <div class="sum-c t ai"><div class="sum-l">Total Spending</div><div class="sum-a" id="sT">$0.00</div><div class="sum-a rd" id="sTr">RD$0.00</div><div id="sTchg" style="font-size:11px;margin-top:6px"></div></div>
 <div class="sum-c p ai"><div class="sum-l">Personal</div><div class="sum-a" id="sP">$0.00</div><div class="sum-a rd" id="sPr">RD$0.00</div><div id="sPchg" style="font-size:11px;margin-top:6px"></div></div>
 <div class="sum-c b ai"><div class="sum-l">Business / Reimbursable</div><div class="sum-a" id="sB">$0.00</div><div class="sum-a rd" id="sBr">RD$0.00</div></div>
+<div class="sum-c ai" style="position:relative;overflow:hidden"><div style="position:absolute;top:0;left:0;right:0;height:2px;background:var(--blu)"></div><div class="sum-l">USD Equivalent Total</div><div class="sum-a" id="sEq">$0.00</div><div class="sum-a rd" style="font-size:11px;color:var(--tx3)" id="sEqNote">Set exchange rate in Settings</div></div>
 <div class="sum-c u ai"><div class="sum-l">Uncategorized</div><div class="sum-a" id="sU">$0.00</div><div class="sum-a rd" id="sUr">RD$0.00</div><div id="uAct" style="margin-top:8px;display:none"><button class="btn btn-s btn-p" onclick="openCat()">Categorize →</button></div></div>
 </div>
-<div class="note" id="oN"><span>ℹ️</span><span>An estimated 5% is added for non-card expenses (cash, transfers, etc.)</span></div>
+<div id="fxBanner" style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(96,165,250,.08);border-radius:var(--rs);font-size:12px;color:var(--blu);margin-bottom:12px"><span>💱</span><span id="fxInfo">Exchange rate not loaded</span><button class="btn btn-s btn-g" onclick="fetchFX()" style="margin-left:auto;font-size:11px">Refresh Rate</button></div>
 <div class="g2" style="margin-top:20px">
 <div class="card ai"><div class="card-h"><div><div class="card-t">Spending by Category</div><div class="card-st">Personal spending only (USD)</div></div></div>
 <div class="don-c"><svg class="don-ch" viewBox="0 0 200 200" id="donut"></svg><div class="don-lg" id="doLg"></div></div></div>
@@ -307,9 +308,32 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 <div id="rlL"></div>
 </div>
 <div class="card">
-<div class="card-h"><div class="card-t">Other Expenses Adjustment</div></div>
-<p style="font-size:13px;color:var(--tx3);margin-bottom:12px">Percentage added for non-card expenses (cash, transfers, etc.)</p>
-<div style="display:flex;align-items:center;gap:12px"><input type="number" id="oPct" value="5" min="0" max="50" style="width:60px;background:var(--s2);border:1px solid var(--brd);color:var(--tx);padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:14px;outline:none" onchange="saveSt()"><span style="font-size:13px;color:var(--tx2)">%</span></div>
+<div class="card-h"><div class="card-t">💵 Manual / Cash Expenses</div></div>
+<p style="font-size:13px;color:var(--tx3);margin-bottom:16px">Add expenses paid in cash or via other methods not captured by your card statements.</p>
+<div style="display:grid;grid-template-columns:130px 1fr 100px 160px auto;gap:8px;align-items:end;margin-bottom:16px">
+<div><label style="font-size:11px;color:var(--tx3);display:block;margin-bottom:4px">Date</label><input type="date" id="manDate" style="width:100%;background:var(--s2);border:1px solid var(--brd);color:var(--tx);padding:6px 8px;border-radius:6px;font-family:inherit;font-size:12px;outline:none"></div>
+<div><label style="font-size:11px;color:var(--tx3);display:block;margin-bottom:4px">Description</label><input type="text" id="manDesc" placeholder="e.g. Cash lunch" style="width:100%;background:var(--s2);border:1px solid var(--brd);color:var(--tx);padding:6px 8px;border-radius:6px;font-family:inherit;font-size:12px;outline:none"></div>
+<div><label style="font-size:11px;color:var(--tx3);display:block;margin-bottom:4px">Amount (USD)</label><input type="number" id="manAmt" step="0.01" placeholder="0.00" style="width:100%;background:var(--s2);border:1px solid var(--brd);color:var(--tx);padding:6px 8px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:12px;outline:none"></div>
+<div><label style="font-size:11px;color:var(--tx3);display:block;margin-bottom:4px">Category</label><select id="manCat" style="width:100%;background:var(--s2);border:1px solid var(--brd);color:var(--tx);padding:6px 8px;border-radius:6px;font-family:inherit;font-size:12px;outline:none"></select></div>
+<button class="btn btn-p btn-s" onclick="addManual()" style="margin-bottom:1px">+ Add</button>
+</div>
+<div id="manList"></div>
+</div>
+<div class="card">
+<div class="card-h"><div class="card-t">💱 Exchange Rate (DOP → USD)</div></div>
+<p style="font-size:13px;color:var(--tx3);margin-bottom:12px">Used to convert RD$ transactions to a USD equivalent for totals. Click to auto-fetch or enter manually.</p>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="font-size:13px;color:var(--tx2)">1 USD =</span>
+<input type="number" id="fxInput" step="0.01" placeholder="60.00" style="width:80px;background:var(--s2);border:1px solid var(--brd);color:var(--tx);padding:6px 10px;border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:14px;outline:none" onchange="setFX()">
+<span style="font-size:13px;color:var(--tx2)">DOP</span>
+<button class="btn btn-s btn-g" onclick="fetchFX()">🔄 Auto-fetch</button>
+<span id="fxStatus" style="font-size:11px;color:var(--tx3)"></span>
+</div>
+</div>
+<div class="card">
+<div class="card-h"><div class="card-t">🔕 Hidden Subscriptions</div></div>
+<p style="font-size:13px;color:var(--tx3);margin-bottom:12px">Merchants un-flagged from the Recurring & Subscriptions section.</p>
+<div id="hidRecList"></div>
 </div>
 </div>
 
@@ -336,7 +360,12 @@ food_dining:{n:'Food & Dining',e:'🍽️',c:'#f97316'},
 groceries:{n:'Groceries',e:'🛒',c:'#84cc16'},
 delivery:{n:'Delivery',e:'🛵',c:'#f59e0b'},
 shopping:{n:'Shopping',e:'🛍️',c:'#ec4899'},
-transportation:{n:'Transportation',e:'🚗',c:'#3b82f6'},
+clothing:{n:'Clothing',e:'👔',c:'#d946ef'},
+medical:{n:'Medical / Pharmacy',e:'💊',c:'#ef4444'},
+gas:{n:'Gas',e:'⛽',c:'#f97316'},
+rideshare:{n:'Uber / Lyft',e:'🚕',c:'#3b82f6'},
+transit:{n:'Public Transit',e:'🚇',c:'#6366f1'},
+parking:{n:'Parking',e:'🅿️',c:'#8b5cf6'},
 subscriptions:{n:'Subscriptions',e:'📱',c:'#8b5cf6'},
 gaming:{n:'Gaming',e:'🎮',c:'#6366f1'},
 travel:{n:'Travel & Hotels',e:'✈️',c:'#06b6d4'},
@@ -353,6 +382,7 @@ sports:{n:'Sports & Recreation',e:'🎾',c:'#4ade80'},
 business:{n:'Business Expense',e:'💼',c:'#fbbf24',biz:true},
 reimbursable:{n:'Reimbursable',e:'🔄',c:'#60a5fa',biz:true},
 bank_fees:{n:'Bank Fees & Interest',e:'🏦',c:'#94a3b8'},
+cash_manual:{n:'Cash / Manual Entry',e:'💵',c:'#a3a3a3'},
 unknown:{n:'Uncategorized',e:'❓',c:'#6b7280'}
 };
 
@@ -370,20 +400,21 @@ const DEF_RULES=[
 ['GREENWICH GOURMET','groceries'],['WESTSIDE MARKET','groceries'],['BOUTIQ CONVENIENCE','groceries'],
 ['L & M DELICATESSEN','groceries'],['7TH AVE CONVENIENCE','groceries'],['HOME OF CHEERS','groceries'],
 ['UBER *EATS','delivery'],['UBER   *EATS','delivery'],['UBER *EATS HELP','delivery'],
-['LOUIS VUITTON','shopping'],['ARITZIA','shopping'],['DICKS SPORTING','shopping'],['BOMBAS','shopping'],
-['TRUECLASSIC','shopping'],['MADEWELL','shopping'],['CHARLES TYRWHITT','shopping'],['RHONE APPAREL','shopping'],
-['UNIQLO','shopping'],['PARAGON ATHLETIC','shopping'],['SUIT SUPPLY','shopping'],['Suit Supply','shopping'],
-['EBAY','shopping'],['AMAZON','shopping'],['Amazon.com','shopping'],['DUANE READE','shopping'],['CVS','shopping'],
-['DUFRY','shopping'],['FEDEX','shopping'],
-['UBER *TRIP','transportation'],['UBER   *TRIP','transportation'],['TEXACO','transportation'],
-['CHEVRON','transportation'],['MTA*NYCT','transportation'],['SFRTA','transportation'],
-['PALM BEACH PARKING','transportation'],['LYFT','transportation'],['CITI BIKE','transportation'],
+['LOUIS VUITTON','clothing'],['ARITZIA','clothing'],['BOMBAS','clothing'],
+['TRUECLASSIC','clothing'],['MADEWELL','clothing'],['CHARLES TYRWHITT','clothing'],['RHONE APPAREL','clothing'],
+['UNIQLO','clothing'],['SUIT SUPPLY','clothing'],['Suit Supply','clothing'],['DUFRY','clothing'],
+['DICKS SPORTING','shopping'],['PARAGON ATHLETIC','shopping'],
+['EBAY','shopping'],['AMAZON','shopping'],['Amazon.com','shopping'],['FEDEX','shopping'],
+['CVS','medical'],['DUANE READE','medical'],['EPS BELLA VISTA','medical'],['FARM HIDALGO','medical'],
+['TEXACO','gas'],['CHEVRON','gas'],
+['UBER *TRIP','rideshare'],['UBER   *TRIP','rideshare'],['LYFT','rideshare'],['CITI BIKE','rideshare'],
+['MTA*NYCT','transit'],['SFRTA','transit'],
+['PALM BEACH PARKING','parking'],
 ['SPOTIFY','subscriptions'],['YOUTUBE','subscriptions'],['DISNEY PLUS','subscriptions'],['Disney Plus','subscriptions'],
 ['AUDIBLE','subscriptions'],
 ['KINGSHOT','gaming'],['Kingshot','gaming'],
 ['EXPEDIA','travel'],['AMERICAN00','travel'],
-['EPS BELLA VISTA','health_fitness'],['FARM HIDALGO','health_fitness'],['MCBURNEY YMCA','health_fitness'],
-['BARRE3','health_fitness'],['TRAININGPEAKS','health_fitness'],['FATTY15','health_fitness'],
+['MCBURNEY YMCA','health_fitness'],['BARRE3','health_fitness'],['TRAININGPEAKS','health_fitness'],['FATTY15','health_fitness'],
 ['DISTRICT 727','entertainment'],['STELLA BEER','entertainment'],['AMC 2112','entertainment'],['AMC ','entertainment'],
 ['IQOS','entertainment'],['OFFLINE 6880','entertainment'],['ONNOS BAR','entertainment'],['BARNES','entertainment'],
 ['HOME DEPOT','home'],['TOTAL WINE','home'],['LAUNDRY PROJECT','home'],
@@ -399,10 +430,10 @@ const DEF_RULES=[
 ['CARGO PARCIAL ANUAL','bank_fees'],['INTERESES FINANC','bank_fees'],['INTERES CONSUMOS','bank_fees']
 ].map(([p,c])=>({p,c}));
 
-let S={mo:0,yr:2026,txs:[],rules:[...DEF_RULES],pdfs:[],xlsx:null,oPct:5};
+let S={mo:0,yr:2026,txs:[],rules:[...DEF_RULES],pdfs:[],xlsx:null,manualTx:[],hiddenRec:[],fxRate:0};
 
-function loadSt(){try{const s=localStorage.getItem('gaston');if(s){const p=JSON.parse(s);S.txs=p.txs||[];S.rules=p.rules||[...DEF_RULES];S.mo=p.mo??0;S.yr=p.yr??2026;S.oPct=p.oPct??5;document.getElementById('oPct').value=S.oPct}}catch(e){}}
-function saveSt(){S.oPct=parseInt(document.getElementById('oPct').value)||5;try{localStorage.setItem('gaston',JSON.stringify({txs:S.txs,rules:S.rules,mo:S.mo,yr:S.yr,oPct:S.oPct}))}catch(e){}}
+function loadSt(){try{const s=localStorage.getItem('gaston');if(s){const p=JSON.parse(s);S.txs=p.txs||[];S.rules=p.rules||[...DEF_RULES];S.mo=p.mo??0;S.yr=p.yr??2026;S.manualTx=p.manualTx||[];S.hiddenRec=p.hiddenRec||[];S.fxRate=p.fxRate||0}}catch(e){}}
+function saveSt(){try{localStorage.setItem('gaston',JSON.stringify({txs:S.txs,rules:S.rules,mo:S.mo,yr:S.yr,manualTx:S.manualTx,hiddenRec:S.hiddenRec,fxRate:S.fxRate}))}catch(e){}}
 
 // ====================== PARSING: PDF ======================
 async function parsePDF(file){
@@ -457,7 +488,10 @@ for(const r of S.rules){if(d.includes(r.p.toUpperCase()))return r.c}
 return 'unknown';
 }
 function applyCats(){S.txs.forEach(tx=>{if(!tx.co)tx.cat=catTx(tx);else tx.cat=tx.co})}
-function getMoTx(){const m=String(S.mo+1).padStart(2,'0'),y=S.yr;return S.txs.filter(tx=>{const[ty,tm]=tx.date.split('-');return ty===String(y)&&tm===m})}
+function getMoTx(){const m=String(S.mo+1).padStart(2,'0'),y=S.yr;
+const card=S.txs.filter(tx=>{const[ty,tm]=tx.date.split('-');return ty===String(y)&&tm===m});
+const manual=S.manualTx.filter(tx=>{const[ty,tm]=tx.date.split('-');return ty===String(y)&&tm===m});
+return[...card,...manual]}
 
 // ====================== UI ======================
 const moNames=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -468,7 +502,7 @@ document.querySelectorAll('.page').forEach(p=>p.classList.remove('act'));
 document.getElementById('pg-'+pg).classList.add('act');
 document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('act'));
 if(el)el.classList.add('act');
-if(pg==='dash')rDash();if(pg==='cats')rCats();if(pg==='txns')rTx();if(pg==='rules')rRules();if(pg==='trends')rTrends();
+if(pg==='dash')rDash();if(pg==='cats')rCats();if(pg==='txns')rTx();if(pg==='rules'){rRules();rManList();rHidRec()};if(pg==='trends')rTrends();
 }
 
 function chgMo(d){
@@ -499,22 +533,26 @@ document.getElementById('dS').textContent=txs.length+' transactions across '+new
 const pers=txs.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='unknown'&&t.cat!=='bank_fees');
 const biz=txs.filter(t=>CATS[t.cat]?.biz);const unk=txs.filter(t=>t.cat==='unknown');
 const su=(a,k)=>a.reduce((s,t)=>s+t[k],0);
-const pm=1+(S.oPct/100);
+const pm=1;
 document.getElementById('sT').textContent='$'+fmt(su(txs,'usd'));
 document.getElementById('sTr').textContent='RD$'+fmt(su(txs,'rdp'));
-document.getElementById('sP').textContent='$'+fmt(su(pers,'usd')*pm);
-document.getElementById('sPr').textContent='RD$'+fmt(su(pers,'rdp')*pm);
+document.getElementById('sP').textContent='$'+fmt(su(pers,'usd'));
+document.getElementById('sPr').textContent='RD$'+fmt(su(pers,'rdp'));
 document.getElementById('sB').textContent='$'+fmt(su(biz,'usd'));
 document.getElementById('sBr').textContent='RD$'+fmt(su(biz,'rdp'));
 document.getElementById('sU').textContent='$'+fmt(su(unk,'usd'));
 document.getElementById('sUr').textContent='RD$'+fmt(su(unk,'rdp'));
 document.getElementById('uAct').style.display=unk.length?'block':'none';
+// USD equivalent
+const eqTotal=txs.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='unknown'&&t.cat!=='bank_fees').reduce((s,t)=>s+usdEq(t),0);
+if(S.fxRate>0){document.getElementById('sEq').textContent='$'+fmt(eqTotal);document.getElementById('sEqNote').textContent='RD$ converted at '+S.fxRate.toFixed(1)+' DOP/USD'}
+else{document.getElementById('sEq').textContent='—';document.getElementById('sEqNote').textContent='Set exchange rate in Settings'}
 // MoM comparison
 const pv=prevMo(S.mo,S.yr);const pvTx=getTxFor(pv.mo,pv.yr);
 const pvPers=pvTx.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='unknown'&&t.cat!=='bank_fees');
 const pvTotal=su(pvTx,'usd');const pvPersU=su(pvPers,'usd');
 document.getElementById('sTchg').innerHTML=pvTotal>0?momBadge(su(txs,'usd'),pvTotal):'';
-document.getElementById('sPchg').innerHTML=pvPersU>0?momBadge(su(pers,'usd')*pm,pvPersU*(1+(S.oPct/100))):'';
+document.getElementById('sPchg').innerHTML=pvPersU>0?momBadge(su(pers,'usd'),pvPersU):'';
 rDonut(pers);rDaily(txs.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='bank_fees'));rTopC(pers);rTopM(pers);rRec(txs);
 }
 
@@ -570,10 +608,12 @@ function rRec(txs){
 const rm={};txs.forEach(tx=>{const k=tx.desc.toUpperCase().substring(0,20);if(!rm[k])rm[k]={txs:[],n:tx.desc};rm[k].txs.push(tx)});
 const subs=Object.values(rm).filter(r=>r.txs.some(t=>['subscriptions','gaming','health_fitness','phone_internet','insurance'].includes(t.cat)))
 .map(r=>({n:cleanN(r.n),a:r.txs.reduce((s,t)=>s+t.usd,0),c:r.txs.length,cat:r.txs[0].cat}));
-const seen=new Set();const us=subs.filter(s=>{const k=s.n.toLowerCase();if(seen.has(k))return false;seen.add(k);return true}).sort((a,b)=>b.a-a.a);
+const seen=new Set();const us=subs.filter(s=>{const k=s.n.toLowerCase();if(seen.has(k))return false;seen.add(k);return true})
+.filter(s=>!S.hiddenRec.includes(s.n.toLowerCase()))
+.sort((a,b)=>b.a-a.a);
 const el=document.getElementById('recL');
 if(!us.length){el.innerHTML='<div style="padding:12px;font-size:13px;color:var(--tx3)">No recurring charges detected</div>';return}
-el.innerHTML=us.map(s=>'<div class="rec-i"><div class="rec-ic">'+(CATS[s.cat]?.e||'📱')+'</div><div class="rec-inf"><div class="rec-n">'+s.n+'</div><div class="rec-f">'+(s.c>1?s.c+' charges':'Monthly')+'</div></div><div class="rec-a">$'+s.a.toFixed(2)+'</div></div>').join('');
+el.innerHTML=us.map(s=>'<div class="rec-i"><div class="rec-ic">'+(CATS[s.cat]?.e||'📱')+'</div><div class="rec-inf"><div class="rec-n">'+s.n+'</div><div class="rec-f">'+(s.c>1?s.c+' charges':'Monthly')+'</div></div><div class="rec-a">$'+s.a.toFixed(2)+'</div><span style="cursor:pointer;color:var(--tx3);font-size:12px;padding:4px 8px;border-radius:4px;transition:.15s" onclick="hideRec(\''+s.n.replace(/'/g,"\\'")+'\');this.parentElement.remove()" title="Remove from subscriptions">✕</span></div>').join('');
 }
 
 // ====================== CATEGORIES PAGE ======================
@@ -663,7 +703,7 @@ rDash();showPage('dash',document.querySelector('.nav-i'));
 
 function clearAll(){
 if(!confirm('Clear all transaction data?'))return;
-S.txs=[];S.pdfs=[];S.xlsx=null;saveSt();updChips();rDash();
+S.txs=[];S.pdfs=[];S.xlsx=null;S.manualTx=[];saveSt();updChips();rManList();rDash();
 }
 
 // ====================== CATEGORIZE MODAL ======================
@@ -879,9 +919,75 @@ const blob=new Blob([csv],{type:'text/csv'});const a=document.createElement('a')
 a.href=URL.createObjectURL(blob);a.download='gaston_'+moName(S.mo,S.yr).replace(' ','_')+'.csv';a.click();
 }
 
+// ====================== EXCHANGE RATE ======================
+async function fetchFX(){
+document.getElementById('fxStatus').textContent='Fetching...';
+try{
+const r=await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+const d=await r.json();const rate=d.rates?.DOP;
+if(rate){S.fxRate=rate;document.getElementById('fxInput').value=rate.toFixed(2);
+document.getElementById('fxStatus').textContent='Updated: 1 USD = '+rate.toFixed(2)+' DOP';
+document.getElementById('fxInfo').textContent='1 USD = '+rate.toFixed(2)+' DOP (live)';
+saveSt();rDash()}
+}catch(e){
+document.getElementById('fxStatus').textContent='Failed to fetch. Enter manually.';
+try{
+const r2=await fetch('https://open.er-api.com/v6/latest/USD');
+const d2=await r2.json();const rate2=d2.rates?.DOP;
+if(rate2){S.fxRate=rate2;document.getElementById('fxInput').value=rate2.toFixed(2);
+document.getElementById('fxStatus').textContent='Updated: 1 USD = '+rate2.toFixed(2)+' DOP';
+document.getElementById('fxInfo').textContent='1 USD = '+rate2.toFixed(2)+' DOP (live)';
+saveSt();rDash()}
+}catch(e2){document.getElementById('fxStatus').textContent='Both APIs failed. Enter rate manually.'}
+}
+}
+function setFX(){const v=parseFloat(document.getElementById('fxInput').value);if(v>0){S.fxRate=v;saveSt();rDash();document.getElementById('fxInfo').textContent='1 USD = '+v.toFixed(2)+' DOP (manual)'}}
+function rdpToUsd(rdp){return S.fxRate>0?rdp/S.fxRate:0}
+function usdEq(tx){return tx.usd+rdpToUsd(tx.rdp)}
+
+// ====================== MANUAL EXPENSES ======================
+function addManual(){
+const date=document.getElementById('manDate').value;
+const desc=document.getElementById('manDesc').value.trim();
+const amt=parseFloat(document.getElementById('manAmt').value);
+const cat=document.getElementById('manCat').value;
+if(!date||!desc||!amt||!cat){alert('Please fill in all fields.');return}
+S.manualTx.push({date,desc,usd:amt,rdp:0,card:'Cash/Manual',src:'manual',cat,co:cat});
+saveSt();
+document.getElementById('manDesc').value='';document.getElementById('manAmt').value='';
+rManList();rDash();
+alert('Manual expense added!');
+}
+function delManual(i){S.manualTx.splice(i,1);saveSt();rManList();rDash()}
+function rManList(){
+const m=String(S.mo+1).padStart(2,'0'),y=String(S.yr);
+const moManual=S.manualTx.filter(tx=>{const[ty,tm]=tx.date.split('-');return ty===y&&tm===m});
+document.getElementById('manList').innerHTML=moManual.length?moManual.map((tx,idx)=>{
+const ri=S.manualTx.indexOf(tx);
+return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--s2);border-radius:6px;margin-bottom:4px;font-size:12px"><span class="mono" style="color:var(--tx2)">'+tx.date+'</span><span style="flex:1">'+tx.desc+'</span><span>'+(CATS[tx.cat]?.e||'')+' '+(CATS[tx.cat]?.n||tx.cat)+'</span><span class="mono" style="font-weight:500">$'+fmt(tx.usd)+'</span><span style="cursor:pointer;color:var(--tx3)" onclick="delManual('+ri+')">✕</span></div>'
+}).join(''):'<div style="font-size:12px;color:var(--tx3);padding:8px">No manual expenses for '+moName(S.mo,S.yr)+'</div>';
+}
+
+// ====================== HIDDEN RECURRING ======================
+function hideRec(name){S.hiddenRec.push(name.toLowerCase());saveSt();rDash()}
+function unhideRec(i){S.hiddenRec.splice(i,1);saveSt();rHidRec();rDash()}
+function rHidRec(){
+document.getElementById('hidRecList').innerHTML=S.hiddenRec.length?S.hiddenRec.map((n,i)=>'<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--s2);border-radius:6px;margin-bottom:4px;font-size:12px"><span style="flex:1">'+n+'</span><button class="btn btn-s btn-g" onclick="unhideRec('+i+')">Restore</button></div>').join(''):'<div style="font-size:12px;color:var(--tx3);padding:8px">No hidden subscriptions</div>';
+}
+
 // ====================== INIT ======================
-loadSt();applyCats();rDash();
+loadSt();applyCats();
+// Populate manual entry category dropdown
+const manCatSel=document.getElementById('manCat');
+manCatSel.innerHTML=Object.entries(CATS).filter(([k])=>k!=='unknown'&&k!=='bank_fees').map(([k,v])=>'<option value="'+k+'">'+v.e+' '+v.n+'</option>').join('');
+// Set default date to today
+document.getElementById('manDate').value=new Date().toISOString().split('T')[0];
+// Load FX rate into input
+if(S.fxRate>0){document.getElementById('fxInput').value=S.fxRate.toFixed(2);document.getElementById('fxInfo').textContent='1 USD = '+S.fxRate.toFixed(2)+' DOP'}
+rManList();rHidRec();rDash();
 document.getElementById('curMo').textContent=moName(S.mo,S.yr);
+// Auto-fetch FX on load
+if(!S.fxRate)fetchFX();
 </script>
 </body>
 </html>
