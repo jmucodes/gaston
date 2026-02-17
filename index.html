@@ -372,6 +372,7 @@ gaming:{n:'Gaming',e:'🎮',c:'#6366f1'},
 travel:{n:'Travel & Hotels',e:'✈️',c:'#06b6d4'},
 health_fitness:{n:'Health & Fitness',e:'💪',c:'#10b981'},
 entertainment:{n:'Entertainment',e:'🎉',c:'#f472b6'},
+drinks:{n:'Drinks / Bars',e:'🍸',c:'#c084fc'},
 home:{n:'Home & Household',e:'🏠',c:'#78716c'},
 pet:{n:'Pet (Lola)',e:'🐾',c:'#a3e635'},
 personal_care:{n:'Personal Care',e:'💈',c:'#e879f9'},
@@ -399,7 +400,7 @@ const DEF_RULES=[
 ['GRAND HOTEL CENTRAL','food_dining'],['MANA 75','food_dining'],
 ['PUBLIX','groceries'],['WHOLEFDS','groceries'],['IDEAL MARKET','groceries'],['ADAM S MARKET','groceries'],
 ['GREENWICH GOURMET','groceries'],['WESTSIDE MARKET','groceries'],['BOUTIQ CONVENIENCE','groceries'],
-['L & M DELICATESSEN','groceries'],['7TH AVE CONVENIENCE','groceries'],['HOME OF CHEERS','groceries'],
+['L & M DELICATESSEN','groceries'],['7TH AVE CONVENIENCE','groceries'],
 ['UBER *EATS','delivery'],['UBER   *EATS','delivery'],['UBER *EATS HELP','delivery'],
 ['LOUIS VUITTON','clothing'],['ARITZIA','clothing'],['BOMBAS','clothing'],
 ['TRUECLASSIC','clothing'],['MADEWELL','clothing'],['CHARLES TYRWHITT','clothing'],['RHONE APPAREL','clothing'],
@@ -416,9 +417,9 @@ const DEF_RULES=[
 ['KINGSHOT','gaming'],['Kingshot','gaming'],
 ['EXPEDIA','travel'],['AMERICAN00','travel'],
 ['MCBURNEY YMCA','health_fitness'],['BARRE3','health_fitness'],['TRAININGPEAKS','health_fitness'],['FATTY15','health_fitness'],
-['DISTRICT 727','entertainment'],['STELLA BEER','entertainment'],['AMC 2112','entertainment'],['AMC ','entertainment'],
-['IQOS','entertainment'],['OFFLINE 6880','entertainment'],['ONNOS BAR','entertainment'],['BARNES','entertainment'],
-['HOME DEPOT','home'],['TOTAL WINE','home'],['LAUNDRY PROJECT','home'],
+['DISTRICT 727','drinks'],['STELLA BEER','drinks'],['ONNOS BAR','drinks'],['TOTAL WINE','drinks'],['HOME OF CHEERS','drinks'],['AMC 2112','entertainment'],['AMC ','entertainment'],
+['IQOS','entertainment'],['OFFLINE 6880','entertainment'],['BARNES','entertainment'],
+['HOME DEPOT','home'],['LAUNDRY PROJECT','home'],
 ['ESTIKI PET','pet'],
 ['ALEX S STAR','personal_care'],
 ['BFINITY','investments'],['BITFI','investments'],
@@ -710,7 +711,7 @@ S.txs=[];S.pdfs=[];S.xlsx=null;S.manualTx=[];saveSt();updChips();rManList();rDas
 // ====================== CATEGORIZE MODAL ======================
 function openCat(){
 const txs=getMoTx().filter(t=>t.cat==='unknown');
-const catOpts=Object.entries(CATS).filter(([k])=>k!=='unknown'&&k!=='bank_fees').map(([k,v])=>'<option value="'+k+'">'+v.e+' '+v.n+'</option>').join('');
+const catOpts=Object.entries(CATS).filter(([k])=>k!=='unknown').map(([k,v])=>'<option value="'+k+'">'+v.e+' '+v.n+'</option>').join('');
 document.getElementById('catMoL').innerHTML=txs.map((tx,i)=>'<div class="mod-i"><div style="flex:1;min-width:150px"><div style="font-size:13px;font-weight:500">'+tx.desc+'</div><div style="font-size:11px;color:var(--tx3);margin-top:2px">'+tx.date+' · '+tx.card+'</div></div><div class="mono" style="font-size:13px;white-space:nowrap">'+(tx.usd>0?'$'+fmt(tx.usd):'')+(tx.rdp>0?' RD$'+fmt(tx.rdp):'')+'</div><select data-idx="'+i+'"><option value="">— Select —</option>'+catOpts+'</select></div>').join('');
 document.getElementById('catMo').classList.add('show');
 }
@@ -855,7 +856,7 @@ document.getElementById('trCatStats').innerHTML='<div style="display:flex;gap:16
 
 // ====================== INLINE CATEGORY EDITOR ======================
 function mkCatDD(ti,curCat){
-const opts=Object.entries(CATS).filter(([k])=>k!=='bank_fees').map(([k,v])=>
+const opts=Object.entries(CATS).filter(([k])=>true).map(([k,v])=>
 '<div class="cat-dd-i'+(k===curCat?' cur':'')+'" onclick="chgCat('+ti+',\''+k+'\',this)">'+(v.e||'')+' '+v.n+'</div>'
 ).join('');
 return '<input class="cat-dd-srch" placeholder="Search categories..." oninput="filterCDD(this)" onclick="event.stopPropagation()">'+opts;
@@ -980,7 +981,7 @@ document.getElementById('hidRecList').innerHTML=S.hiddenRec.length?S.hiddenRec.m
 loadSt();applyCats();
 // Populate manual entry category dropdown
 const manCatSel=document.getElementById('manCat');
-manCatSel.innerHTML=Object.entries(CATS).filter(([k])=>k!=='unknown'&&k!=='bank_fees').map(([k,v])=>'<option value="'+k+'">'+v.e+' '+v.n+'</option>').join('');
+manCatSel.innerHTML=Object.entries(CATS).filter(([k])=>k!=='unknown').map(([k,v])=>'<option value="'+k+'">'+v.e+' '+v.n+'</option>').join('');
 // Set default date to today
 document.getElementById('manDate').value=new Date().toISOString().split('T')[0];
 // Load FX rate into input
