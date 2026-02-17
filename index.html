@@ -536,13 +536,13 @@ const pers=txs.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='unknown'&&t.cat!=='bank_fee
 const biz=txs.filter(t=>CATS[t.cat]?.biz);const unk=txs.filter(t=>t.cat==='unknown');
 const su=(a,k)=>a.reduce((s,t)=>s+t[k],0);
 const pm=1;
-document.getElementById('sT').textContent='$'+fmt(su(txs,'usd'));
+document.getElementById('sT').textContent='$'+fmt(txs.reduce((s,t)=>s+usdEq(t),0));
 document.getElementById('sTr').textContent='RD$'+fmt(su(txs,'rdp'));
-document.getElementById('sP').textContent='$'+fmt(su(pers,'usd'));
+document.getElementById('sP').textContent='$'+fmt(pers.reduce((s,t)=>s+usdEq(t),0));
 document.getElementById('sPr').textContent='RD$'+fmt(su(pers,'rdp'));
-document.getElementById('sB').textContent='$'+fmt(su(biz,'usd'));
+document.getElementById('sB').textContent='$'+fmt(biz.reduce((s,t)=>s+usdEq(t),0));
 document.getElementById('sBr').textContent='RD$'+fmt(su(biz,'rdp'));
-document.getElementById('sU').textContent='$'+fmt(su(unk,'usd'));
+document.getElementById('sU').textContent='$'+fmt(unk.reduce((s,t)=>s+usdEq(t),0));
 document.getElementById('sUr').textContent='RD$'+fmt(su(unk,'rdp'));
 document.getElementById('uAct').style.display=unk.length?'block':'none';
 // USD equivalent
@@ -552,21 +552,21 @@ else{document.getElementById('sEq').textContent='—';document.getElementById('s
 // MoM comparison
 const pv=prevMo(S.mo,S.yr);const pvTx=getTxFor(pv.mo,pv.yr);
 const pvPers=pvTx.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='unknown'&&t.cat!=='bank_fees');
-const pvTotal=su(pvTx,'usd');const pvPersU=su(pvPers,'usd');
-document.getElementById('sTchg').innerHTML=pvTotal>0?momBadge(su(txs,'usd'),pvTotal):'';
-document.getElementById('sPchg').innerHTML=pvPersU>0?momBadge(su(pers,'usd'),pvPersU):'';
+const pvTotal=pvTx.reduce((s,t)=>s+usdEq(t),0);const pvPersU=pvPers.reduce((s,t)=>s+usdEq(t),0);
+document.getElementById('sTchg').innerHTML=pvTotal>0?momBadge(txs.reduce((s,t)=>s+usdEq(t),0),pvTotal):'';
+document.getElementById('sPchg').innerHTML=pvPersU>0?momBadge(pers.reduce((s,t)=>s+usdEq(t),0),pvPersU):'';
 rDonut(pers);rDaily(txs.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='bank_fees'));rTopC(pers);rTopM(pers);rRec(txs);
 }
 
 function rDonut(txs){
-const bc={};txs.forEach(tx=>{if(!bc[tx.cat])bc[tx.cat]={u:0,r:0};bc[tx.cat].u+=tx.usd;bc[tx.cat].r+=tx.rdp});
-const sorted=Object.entries(bc).sort(([,a],[,b])=>b.u-a.u).filter(([,v])=>v.u>0);
-const total=sorted.reduce((s,[,v])=>s+v.u,0);
+const bc={};txs.forEach(tx=>{if(!bc[tx.cat])bc[tx.cat]={u:0,r:0,eq:0};bc[tx.cat].u+=tx.usd;bc[tx.cat].r+=tx.rdp;bc[tx.cat].eq+=usdEq(tx)});
+const sorted=Object.entries(bc).sort(([,a],[,b])=>b.eq-a.eq).filter(([,v])=>v.eq>0);
+const total=sorted.reduce((s,[,v])=>s+v.eq,0);
 const svg=document.getElementById('donut');svg.innerHTML='';
 if(!sorted.length){svg.innerHTML='<text x="100" y="105" text-anchor="middle" fill="#5c5a6e" font-size="12">No data</text>';document.getElementById('doLg').innerHTML='';return}
 const cx=100,cy=100,r=70,sw=28,circ=2*Math.PI*r;let off=0;
 sorted.forEach(([cat,val])=>{
-const pct=val.u/total,dl=pct*circ,col=CATS[cat]?.c||'#6b7280';
+const pct=val.eq/total,dl=pct*circ,col=CATS[cat]?.c||'#6b7280';
 const ci=document.createElementNS('http://www.w3.org/2000/svg','circle');
 ci.setAttribute('cx',cx);ci.setAttribute('cy',cy);ci.setAttribute('r',r);ci.setAttribute('fill','none');
 ci.setAttribute('stroke',col);ci.setAttribute('stroke-width',sw);
@@ -582,18 +582,18 @@ t2.setAttribute('x',cx);t2.setAttribute('y',cy+12);t2.setAttribute('text-anchor'
 t2.setAttribute('fill','#5c5a6e');t2.setAttribute('font-size','10');t2.textContent='Personal USD';svg.appendChild(t2);
 document.getElementById('doLg').innerHTML=sorted.slice(0,10).map(([cat,val])=>'<div class="lg-i"><div class="lg-d" style="background:'+
 (CATS[cat]?.c||'#6b7280')+'"></div><span class="lg-l">'+(CATS[cat]?.e||'')+' '+(CATS[cat]?.n||cat)+
-'</span><span class="lg-v">$'+fmtI(val.u)+'</span></div>').join('');
+'</span><span class="lg-v">$'+fmtI(val.eq)+'</span></div>').join('');
 }
 
 function rDaily(txs){
 const dim=new Date(S.yr,S.mo+1,0).getDate();document.getElementById('dMx').textContent=dim;
-const d=Array(dim).fill(0);txs.forEach(tx=>{const dy=parseInt(tx.date.split('-')[2])-1;if(dy>=0&&dy<dim)d[dy]+=tx.usd+(tx.rdp/60)});
+const d=Array(dim).fill(0);txs.forEach(tx=>{const dy=parseInt(tx.date.split('-')[2])-1;if(dy>=0&&dy<dim)d[dy]+=usdEq(tx)});
 const mx=Math.max(...d,1);
 document.getElementById('dCh').innerHTML=d.map((v,i)=>{const h=(v/mx)*100;return '<div class="db" style="height:'+Math.max(h,2)+'%;background:'+(v>mx*.7?'var(--red)':v>mx*.4?'var(--yel)':'var(--acc)')+'"><div class="tip">Day '+(i+1)+': $'+v.toFixed(0)+'</div></div>'}).join('');
 }
 
 function rTopC(txs){
-const bc={};txs.forEach(tx=>{if(!bc[tx.cat])bc[tx.cat]=0;bc[tx.cat]+=tx.usd});
+const bc={};txs.forEach(tx=>{if(!bc[tx.cat])bc[tx.cat]=0;bc[tx.cat]+=usdEq(tx)});
 const sorted=Object.entries(bc).sort(([,a],[,b])=>b-a).slice(0,8);const mx=sorted[0]?.[1]||1;
 document.getElementById('topC').innerHTML=sorted.map(([cat,val])=>{const p=(val/mx)*100;return '<div class="br"><span class="br-l">'+(CATS[cat]?.e||'')+' '+(CATS[cat]?.n||cat)+'</span><div class="br-t"><div class="br-f" style="width:'+p+'%;background:'+(CATS[cat]?.c||'#6b7280')+'"><span class="br-v" style="color:'+(p>30?'white':'var(--tx)')+'">$'+fmtI(val)+'</span></div></div></div>'}).join('');
 }
@@ -601,7 +601,7 @@ document.getElementById('topC').innerHTML=sorted.map(([cat,val])=>{const p=(val/
 function cleanN(d){let n=d.replace(/,.*$/,'').replace(/\s+/g,' ').trim().replace(/\s*#\d+.*$/,'').replace(/^(TST\*|SQ \*|GOOGLE \*|SP |PAYPAL \*)/,'').replace(/\d{10,}/,'');if(n.length>24)n=n.substring(0,24)+'…';return n}
 
 function rTopM(txs){
-const bm={};txs.forEach(tx=>{const n=cleanN(tx.desc);if(!bm[n])bm[n]={u:0,c:0};bm[n].u+=tx.usd;bm[n].c++});
+const bm={};txs.forEach(tx=>{const n=cleanN(tx.desc);if(!bm[n])bm[n]={u:0,c:0};bm[n].u+=usdEq(tx);bm[n].c++});
 const sorted=Object.entries(bm).sort(([,a],[,b])=>b.u-a.u).slice(0,8);const mx=sorted[0]?.[1]?.u||1;
 document.getElementById('topM').innerHTML=sorted.map(([n,v])=>{const p=(v.u/mx)*100;return '<div class="br"><span class="br-l">'+n+'</span><div class="br-t"><div class="br-f" style="width:'+p+'%;background:var(--acc)"><span class="br-v" style="color:'+(p>30?'white':'var(--tx)')+'">$'+fmtI(v.u)+' ('+v.c+'x)</span></div></div></div>'}).join('');
 }
@@ -624,8 +624,8 @@ function swCatTab(m,el){catTab=m;document.querySelectorAll('#pg-cats .tab').forE
 function rCats(){
 const txs=getMoTx();const ib=catTab==='b';
 const fl=txs.filter(tx=>ib?(CATS[tx.cat]?.biz):(!CATS[tx.cat]?.biz&&tx.cat!=='bank_fees'));
-const bc={};fl.forEach(tx=>{if(!bc[tx.cat])bc[tx.cat]={u:0,r:0,c:0};bc[tx.cat].u+=tx.usd;bc[tx.cat].r+=tx.rdp;bc[tx.cat].c++});
-const sorted=Object.entries(bc).sort(([,a],[,b])=>b.u-a.u);const mx=sorted[0]?.[1]?.u||1;
+const bc={};fl.forEach(tx=>{if(!bc[tx.cat])bc[tx.cat]={u:0,r:0,c:0,eq:0};bc[tx.cat].u+=tx.usd;bc[tx.cat].r+=tx.rdp;bc[tx.cat].eq+=usdEq(tx);bc[tx.cat].c++});
+const sorted=Object.entries(bc).sort(([,a],[,b])=>b.eq-a.eq);const mx=sorted[0]?.[1]?.eq||1;
 document.getElementById('catL').innerHTML=sorted.length?sorted.map(([cat,v])=>'<div class="cat-r"><div class="cat-e">'+(CATS[cat]?.e||'❓')+'</div><div><div class="cat-n">'+(CATS[cat]?.n||cat)+' <span style="color:var(--tx3);font-size:11px">('+v.c+')</span></div><div class="cat-bt"><div class="cat-bf" style="width:'+(v.u/mx*100)+'%;background:'+(CATS[cat]?.c||'#6b7280')+'"></div></div></div><div class="cat-a">$'+fmt(v.u)+'</div><div class="cat-ar">'+(v.r>0?'RD$'+fmt(v.r):'')+'</div></div>').join(''):'<div style="text-align:center;padding:40px;color:var(--tx3)">No data for this period</div>';
 }
 
@@ -783,7 +783,7 @@ document.getElementById('trAvgs').innerHTML='';return;
 // Monthly spending bar chart
 const monthData=months.map(({mo,yr})=>{
 const txs=getTxFor(mo,yr).filter(t=>!CATS[t.cat]?.biz&&t.cat!=='bank_fees');
-const usd=txs.reduce((s,t)=>s+t.usd,0);const rdp=txs.reduce((s,t)=>s+t.rdp,0);
+const usd=txs.reduce((s,t)=>s+usdEq(t),0);const rdp=txs.reduce((s,t)=>s+t.rdp,0);
 return{mo,yr,usd,rdp,label:moNames[mo].substring(0,3)+' '+yr};
 });
 const mxU=Math.max(...monthData.map(d=>d.usd),1);
@@ -800,8 +800,8 @@ document.getElementById('trPrevH').textContent=moNames[prev.mo].substring(0,3)+'
 document.getElementById('trCurH').textContent=moNames[cur.mo].substring(0,3)+' '+cur.yr;
 const allCats=new Set();curTx.forEach(t=>allCats.add(t.cat));prevTx.forEach(t=>allCats.add(t.cat));
 const compData=[...allCats].map(cat=>{
-const pU=prevTx.filter(t=>t.cat===cat).reduce((s,t)=>s+t.usd,0);
-const cU=curTx.filter(t=>t.cat===cat).reduce((s,t)=>s+t.usd,0);
+const pU=prevTx.filter(t=>t.cat===cat).reduce((s,t)=>s+usdEq(t),0);
+const cU=curTx.filter(t=>t.cat===cat).reduce((s,t)=>s+usdEq(t),0);
 const chg=pU>0?((cU-pU)/pU)*100:cU>0?100:0;
 return{cat,prev:pU,cur:cU,chg};
 }).sort((a,b)=>b.cur-a.cur);
@@ -825,7 +825,7 @@ const totalMonths=monthData.length;const totalUSD=monthData.reduce((s,d)=>s+d.us
 const avgUSD=totalUSD/totalMonths;
 const catAvgs={};months.forEach(({mo,yr})=>{
 getTxFor(mo,yr).filter(t=>!CATS[t.cat]?.biz&&t.cat!=='bank_fees').forEach(t=>{
-if(!catAvgs[t.cat])catAvgs[t.cat]={total:0,months:new Set()};catAvgs[t.cat].total+=t.usd;catAvgs[t.cat].months.add(mo+'-'+yr);
+if(!catAvgs[t.cat])catAvgs[t.cat]={total:0,months:new Set()};catAvgs[t.cat].total+=usdEq(t);catAvgs[t.cat].months.add(mo+'-'+yr);
 })});
 const avgSorted=Object.entries(catAvgs).sort(([,a],[,b])=>b.total-a.total);
 document.getElementById('trAvgs').innerHTML='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"><div style="background:var(--s2);padding:16px;border-radius:var(--rs)"><div style="font-size:11px;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">Months Tracked</div><div class="mono" style="font-size:20px;font-weight:500">'+totalMonths+'</div></div><div style="background:var(--s2);padding:16px;border-radius:var(--rs)"><div style="font-size:11px;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">Total Personal (USD)</div><div class="mono" style="font-size:20px;font-weight:500">$'+fmtI(totalUSD)+'</div></div><div style="background:var(--s2);padding:16px;border-radius:var(--rs)"><div style="font-size:11px;color:var(--tx3);text-transform:uppercase;margin-bottom:4px">Monthly Average</div><div class="mono" style="font-size:20px;font-weight:500">$'+fmtI(avgUSD)+'</div></div></div>'+
@@ -838,7 +838,7 @@ const cat=document.getElementById('trCatSel').value;if(!cat)return;
 const months=getDataMonths();
 const data=months.map(({mo,yr})=>{
 const txs=getTxFor(mo,yr).filter(t=>t.cat===cat);
-return{mo,yr,usd:txs.reduce((s,t)=>s+t.usd,0),label:moNames[mo].substring(0,3)+' '+yr};
+return{mo,yr,usd:txs.reduce((s,t)=>s+usdEq(t),0),label:moNames[mo].substring(0,3)+' '+yr};
 });
 const mx=Math.max(...data.map(d=>d.usd),1);
 document.getElementById('trCatChart').innerHTML='<div class="bc">'+data.map(d=>{
