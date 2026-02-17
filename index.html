@@ -547,8 +547,8 @@ document.getElementById('sUr').textContent='RD$'+fmt(su(unk,'rdp'));
 document.getElementById('uAct').style.display=unk.length?'block':'none';
 // USD equivalent
 const eqTotal=txs.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='unknown'&&t.cat!=='bank_fees').reduce((s,t)=>s+usdEq(t),0);
-if(S.fxRate>0){document.getElementById('sEq').textContent='$'+fmt(eqTotal);document.getElementById('sEqNote').textContent='RD$ converted at '+S.fxRate.toFixed(1)+' DOP/USD'}
-else{document.getElementById('sEq').textContent='—';document.getElementById('sEqNote').textContent='Set exchange rate in Settings'}
+if(S.fxRate>0){document.getElementById('sEq').textContent='$'+fmt(eqTotal);document.getElementById('sEqNote').textContent='RD$ at '+S.fxRate.toFixed(1)+' DOP/USD'}
+else{document.getElementById('sEq').textContent='$'+fmt(eqTotal);document.getElementById('sEqNote').textContent='RD$ at ~61 DOP/USD (default). Refresh rate for accuracy.'}
 // MoM comparison
 const pv=prevMo(S.mo,S.yr);const pvTx=getTxFor(pv.mo,pv.yr);
 const pvPers=pvTx.filter(t=>!CATS[t.cat]?.biz&&t.cat!=='unknown'&&t.cat!=='bank_fees');
@@ -956,7 +956,7 @@ saveSt();rDash()}
 }
 }
 function setFX(){const v=parseFloat(document.getElementById('fxInput').value);if(v>0){S.fxRate=v;saveSt();rDash();document.getElementById('fxInfo').textContent='1 USD = '+v.toFixed(2)+' DOP (manual)'}}
-function rdpToUsd(rdp){return S.fxRate>0?rdp/S.fxRate:0}
+function rdpToUsd(rdp){return rdp/(S.fxRate||61)}
 function usdEq(tx){return tx.usd+rdpToUsd(tx.rdp)}
 
 // ====================== MANUAL EXPENSES ======================
