@@ -144,7 +144,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);min-h
 /* Inline category editor */
 .tx-cat{cursor:pointer;transition:.15s}.tx-cat:hover{background:var(--acc-s);color:var(--acc)}
 .cat-edit{position:relative;display:inline-block}
-.cat-dd{display:none;position:absolute;top:100%;left:0;z-index:50;background:var(--s1);border:1px solid var(--brd);border-radius:var(--rs);padding:6px;min-width:220px;max-height:320px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.cat-dd{display:none;position:fixed;z-index:50;background:var(--s1);border:1px solid var(--brd);border-radius:var(--rs);padding:6px;min-width:220px;max-height:320px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.5)}
 .cat-dd.open{display:block}
 .cat-dd-i{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:6px;font-size:12px;cursor:pointer;color:var(--tx2);transition:.1s;white-space:nowrap}
 .cat-dd-i:hover{background:var(--s2);color:var(--tx)}
@@ -868,8 +868,20 @@ document.querySelectorAll('.cat-dd.open').forEach(d=>d.classList.remove('open'))
 const dd=document.getElementById('cdd-'+ti);
 dd.classList.toggle('open');
 if(dd.classList.contains('open')){
+// Position fixed relative to the clicked element
+const rect=el.getBoundingClientRect();
+const spaceBelow=window.innerHeight-rect.bottom;
+const spaceAbove=rect.top;
+const ddHeight=Math.min(320, window.innerHeight*0.6);
+if(spaceBelow<ddHeight&&spaceAbove>spaceBelow){
+// Show above
+dd.style.top='auto';dd.style.bottom=(window.innerHeight-rect.top+4)+'px';dd.style.left=rect.left+'px';
+}else{
+// Show below
+dd.style.top=(rect.bottom+4)+'px';dd.style.bottom='auto';dd.style.left=rect.left+'px';
+}
+dd.style.maxHeight=Math.min(320,Math.max(spaceBelow,spaceAbove)-20)+'px';
 const srch=dd.querySelector('.cat-dd-srch');if(srch)srch.focus();
-// Close on click outside
 setTimeout(()=>{
 const closer=function(e){if(!dd.contains(e.target)&&e.target!==el){dd.classList.remove('open');document.removeEventListener('click',closer)}};
 document.addEventListener('click',closer);
